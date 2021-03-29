@@ -18,24 +18,32 @@ function explain () {
     target=$(type -a "$command")
   fi
 
-  target="$(echo "$target" | sed -nE "s/^$command is( an)? (.*)$/\2/p")"
+  target="$(echo "$target" | sed -nE "s/^$command is( an?)? (.*)/\2/p")"
 
   case "$target" in
-    alias)
+    alias\ *)
       EXPLAINER $(unalias "$command"; type "$command" | grep -o '/.*') $@
       ;;
-    command)
+    command\ *)
       EXPLAINER $(command -v "$command") $@
       ;;
-    function)
+    function\ *)
       type -f "$command" | EXPLAINER $@
       ;;
-    hash)
+    hash\ *)
       output=$(hash -m "$1")
       EXPLAINER ${output##*=} $@
       ;;
+    shell\ builtin)
+      man $command
+      ;;
     */*)
-      EXPLAINER $target
+      if [[ $(file "$target" | grep -v 'script' | grep -E 'binary|executable') ]]
+      then
+        man $command 2>/dev/null || $command --help
+      else
+        EXPLAINER $target
+      fi
       ;;
     *)
       echo $target
