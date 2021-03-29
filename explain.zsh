@@ -1,45 +1,44 @@
 #!/bin/zsh
 
 export EXPLAINER='cat'
-(command -v bat &>/dev/null) && EXPLAINER="bat -l'sh'"
-
-
-explain-help () {
-  echo "command not found: '$1'"
-}
+(command -v bat &>/dev/null) && alias EXPLAINER="bat -l'sh'"
 
 
 ## see what aliases and shortcuts mean
 function explain () {
-  command=$1
-  shift
+  command=$@[-1]
+  unset $@[-1]
 
-  [[ -z $command || !(command -v $command) ]] && explain-help $command && return 0
+  [[ ! $(command -v $command) ]] && echo "command not found: '$command'" && return 0
 
-  if [[ $((type -a $command | wc -l)) -gt 1 ]]
+  if [[ $(type -a $command | wc -l) -gt 1 ]]
   then
     target=$(type -a $command | fzf --height 40% --reverse)
-    target_type=() # todo
   else
     target=$(type -a "$command")
   fi
 
-  case "${target_type##*: }" in
+  target="$(echo "$target" | sed -nE "s/^$command is( an)? (.*)$/\2/p")"
+
+  case "$target" in
     alias)
-      $EXPLAINER $(unalias "$command"; type "$command" | grep -o '/.*') $@
+      EXPLAINER $(unalias "$command"; type "$command" | grep -o '/.*') $@
       ;;
     command)
-      $EXPLAINER $(command -v "$command") $@
+      EXPLAINER $(command -v "$command") $@
       ;;
     function)
-      type -f "$command" | $EXPLAINER $@
+      type -f "$command" | EXPLAINER $@
       ;;
     hash)
       output=$(hash -m "$1")
-      $EXPLAINER ${output##*=} $@
+      EXPLAINER ${output##*=} $@
+      ;;
+    */*)
+      EXPLAINER $target
       ;;
     *)
-      echo $target_type
+      echo $target
       ;;
     esac
 }
