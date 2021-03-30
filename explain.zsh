@@ -1,11 +1,31 @@
 #!/bin/zsh
 
-export EXPLAINER='cat'
-(command -v bat &>/dev/null) && alias EXPLAINER="bat -l'sh'"
+###
+alias EXPLAINER='cat'
+###
+export EXPANSION_ON_SPACE=false
+export EXPANSION_FILTER=()
+###
+RED='\033[1;31m'
+GREEN='\033[0;32m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+###
+
+find-alias () {
+  echo -n "searching..."
+
+  source="$(${$(ps -cp "$$" -o command="")##-} -ixlc : 2>&1 | grep "alias '$1=.*'" | tail -1)"
+  read file line <<< $(echo $source | sed -E "s/^\+(.*\/.*):([0-9]+)> alias '$1=.*'/\1 \2/")
+  statement="$(cat $file | sed -n "${line}p")"
+  
+  echo -n "\r"
+  echo "${PURPLE}$file\n${GREEN}$line${NC}:${RED}$statement${NC}"
+}
 
 
 ## see what aliases and shortcuts mean
-function explain () {
+explain () {
   command=$@[-1]
   unset $@[-1]
 
@@ -22,22 +42,27 @@ function explain () {
 
   case "$target" in
     alias\ *)
-      EXPLAINER $(unalias "$command"; type "$command" | grep -o '/.*') $@
+      find_alias $command
       ;;
     command\ *)
+      echo "command!"
       EXPLAINER $(command -v "$command") $@
       ;;
     function\ *)
+      echo "function!"
       type -f "$command" | EXPLAINER $@
       ;;
     hash\ *)
+      echo "hash!"
       output=$(hash -m "$1")
       EXPLAINER ${output##*=} $@
       ;;
     shell\ builtin)
+      echo "builtin!"
       man $command
       ;;
     */*)
+      echo "path!"
       if [[ $(file "$target" | grep -v 'script' | grep -E 'binary|executable') ]]
       then
         man $command 2>/dev/null || $command --help
@@ -70,17 +95,12 @@ expand-or-explain () {
     explain $(echo $target | cut -d' ' -f1) --pager='less -R'
   fi
 }
-zle -N expand-or-explain
-bindkey '^E' expand-or-explain
 
 
-typeset -ga EXPANSION_FILTER
-export EXPANSION_FILTER
-# export EXPANSION_ON_SPACE=true
 expand-alias () {
-  local target="$(echo $LBUFFER | grep -oE "[-[:alnum:]]+$")" # matches a word at the end of LBUFFER
+  local target="$(echo $LBUFFER | grep -oE "[-_[:alnum:]]+$")" # matches a word at the end of LBUFFER
 
-  if [[ -n $EXPANSION_ON_SPACE &&
+  if [[ $EXPANSION_ON_SPACE == 'true' &&
         -z ${EXPANSION_FILTER[(re)$target]} &&
         `type -w "$target" 2>/dev/null` == *": alias"
      ]]
@@ -93,10 +113,3 @@ expand-alias () {
   fi
   zle magic-space
 }
-zle -N expand-alias
-bindkey ' '    expand-alias
-bindkey '^ '   magic-space          # control-space to bypass completion
-bindkey -M isearch " "  magic-space # normal space during searches
-
-zstyle ':completion:*' completer _expand_alias _complete _ignored
-zstyle ':completion:*' regular true
