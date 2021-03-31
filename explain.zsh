@@ -1,7 +1,7 @@
-#!/bin/zsh
+#!/bin/sh
 
 ###
-alias EXPLAINER='cat'
+alias EXPLAINER="$((command -v bat &>/dev/null) && echo "bat -l'sh'" || echo "cat")"
 ###
 export EXPANSION_ON_SPACE=false
 export EXPANSION_FILTER=()
@@ -12,10 +12,26 @@ PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 ###
 
+select-from-list () {
+  if (command -v fzf)
+  then
+    fzf --height 40% --reverse <<<$@
+  else
+    COLUMNS=1
+    PS3="option: "
+    select item
+    do
+      echo "$item"
+      break;
+    done
+  fi
+}
+
 find-alias () {
   echo -n "searching..."
 
   source="$(${$(ps -cp "$$" -o command="")##-} -ixlc : 2>&1 | grep "alias '$1=.*'" | tail -1)"
+  echo "\r$source"
   read file line <<< $(echo $source | sed -E "s/^\+(.*\/.*):([0-9]+)> alias '$1=.*'/\1 \2/")
   statement="$(cat $file | sed -n "${line}p")"
   
@@ -32,24 +48,25 @@ explain () {
   [[ ! $(command -v $command) ]] && echo "command not found: '$command'" && return 0
 
   if [[ $(type -a $command | wc -l) -gt 1 ]]
-  then
-    target=$(type -a $command | fzf --height 40% --reverse)
+  then    
+    target="$(IFS=$'\n'; select-from-list $(type -a "$command") )"
   else
-    target=$(type -a "$command")
+    target="$(type -a "$command")"
   fi
 
   target="$(echo "$target" | sed -nE "s/^$command is( an?)? (.*)/\2/p")"
 
   case "$target" in
     alias\ *)
-      find_alias $command
+      # echo "alias!"
+      find-alias $command
       ;;
     command\ *)
-      echo "command!"
+      # echo "command!"
       EXPLAINER $(command -v "$command") $@
       ;;
     function\ *)
-      echo "function!"
+      # echo "function!"
       type -f "$command" | EXPLAINER $@
       ;;
     hash\ *)
@@ -58,11 +75,11 @@ explain () {
       EXPLAINER ${output##*=} $@
       ;;
     shell\ builtin)
-      echo "builtin!"
+      # echo "builtin!"
       man $command
       ;;
     */*)
-      echo "path!"
+      # echo "path!"
       if [[ $(file "$target" | grep -v 'script' | grep -E 'binary|executable') ]]
       then
         man $command 2>/dev/null || $command --help
@@ -71,6 +88,7 @@ explain () {
       fi
       ;;
     *)
+      # echo "other!"
       echo $target
       ;;
     esac
