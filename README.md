@@ -1,4 +1,5 @@
 # shell-tools-explain
+
 Quickly access the source for shell functions/aliases, or the man page for external programs.
 
 ## Usage
@@ -11,12 +12,13 @@ EXPANSION_ON_SPACE=true
 
 
 ```
-alias EXPLAINER=''
+alias READ=''
 ```
 
 ```
 EXPANSION_FILTER=()
 ```
+
 
 
 ```
