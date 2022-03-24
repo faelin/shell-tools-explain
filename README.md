@@ -10,26 +10,8 @@ To enable automatic-expansion-on-space, set the following value anywhere in your
 EXPANSION_ON_SPACE=true
 ```
 
-
-```
-alias READ=''
-```
+To disable expand-on-space for specific commands, add them to the EXPANSION_FILTER list anywhere in your shell configuration:
 
 ```
 EXPANSION_FILTER=()
-```
-
-
-
-```
-zle -N expand-or-explain
-bindkey '^E' expand-or-explain
-
-zle -N expand-alias
-bindkey ' '    expand-alias
-bindkey '^ '   magic-space          # control-space to bypass completion
-bindkey -M isearch " "  magic-space # normal space during searches
-
-zstyle ':completion:*' completer _expand_alias _complete _ignored
-zstyle ':completion:*' regular true
 ```
