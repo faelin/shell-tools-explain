@@ -112,7 +112,7 @@ then
       debug "command!"
       READER $(command -v "$command") $args
       ;;
-    function\ *)
+    ?(shell )function\ *)
       debug "function!"
       type -f "$command" | READER $args
       ;;
