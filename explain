@@ -91,13 +91,7 @@ then
 
   [[ ! $(command -v $command) ]] && echo "command not found: '$command'" && return 0
 
-  if [[ $(type -a $command | wc -l) -gt 1 ]]
-  then    
-    # zsh variant:  target="$( IFS=$'\n'; select-from-list $(type -a "$command") )"
-    # bash variant:  target="$( IFS=$'\n' select-from-list $(type -a "$command") )"
-  else
-    target="$(type -a "$command")"
-  fi
+  target="$( IFS=$'\n' select-from-list $(type -a "$command" | uniq) )"
   debug "target: $target"
 
   target="$(echo "$target" | sed -nE "s/^$command is( an?)? (.*)/\2/p")"
