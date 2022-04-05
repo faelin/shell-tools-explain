@@ -38,15 +38,14 @@ select-from-list () {
   debug "select from:  ${${@}//${IFS:0:1}/, }"
 
   list=()
-  if [ "$#" -gt 0 ]; then
+  if [ $# -gt 1 ]; then
     for line in "$@";
     do
       list+=("$line");
     done
   else
-    # while read -r line ; do
-    #   list+=("$line")
-    # done
+    echo "${@[0]}"
+    return;
   fi
 
   # if (command -v fzf >/dev/null 2>&1)
@@ -87,8 +86,8 @@ if [[ $# -gt 0 ]]
 then
   args=($@)
   command=${args[-1]}
-  unset $args[-1]
   debug "command: $command"
+  [ $# -gt 0 ] && unset $args[-1]
 
   [[ ! $(command -v $command) ]] && echo "command not found: '$command'" && return 0
 
