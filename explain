@@ -20,8 +20,7 @@ fi
 # shellcheck disable=SC2139
 alias READER="$(  (command -v bat &>/dev/null) && echo "bat -l'sh'" || echo "cat"  )"
 ###
-export EXPANSION_ON_SPACE=false
-export EXPANSION_FILTER=()
+typeset -g EXPANSION_ON_SPACE=false
 typeset -ga EXPANSION_FILTER
 ##
 RED='\033[1;31m'
@@ -32,7 +31,7 @@ NC='\033[0m' # No Color
 
 
 select-from-list () {
-  # local IFS=$'\n'
+  IFS=$'\n'
 
   debug "${${@}//${IFS:0:1}/, }"
 
@@ -84,7 +83,8 @@ find-alias () {
   echo "${PURPLE}$file\n${GREEN}$line${NC}:${RED}$statement${NC}"
 }
 
-explain () {
+if [[ $# -gt 0 ]]
+then
   args=($@)
   command=${args[-1]}
   unset $args[-1]
@@ -140,4 +140,7 @@ explain () {
       echo $target
       ;;
   esac
+else
+  echo "You must provide a command to explain!"
+fi
 
