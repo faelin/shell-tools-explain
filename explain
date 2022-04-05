@@ -33,6 +33,11 @@ NC='\033[0m' # No Color
 
 select-from-list () {
   # local IFS=$'\n'
+
+  debug "${${@}//${IFS:0:1}/, }"
+
+  debug "select from:  ${${@}//${IFS:0:1}/, }"
+
   list=()
   if [ "$#" -gt 0 ]; then
     for line in "$@";
@@ -83,6 +88,7 @@ explain () {
   args=($@)
   command=${args[-1]}
   unset $args[-1]
+  debug "command: $command"
 
   [[ ! $(command -v $command) ]] && echo "command not found: '$command'" && return 0
 
@@ -93,33 +99,35 @@ explain () {
   else
     target="$(type -a "$command")"
   fi
+  debug "target: $target"
 
   target="$(echo "$target" | sed -nE "s/^$command is( an?)? (.*)/\2/p")"
+  debug "target: $target"
 
   case "$target" in
     alias\ *)
-      # echo "alias!"
+      debug "alias!"
       find-alias $command
       ;;
     command\ *)
-      # echo "command!"
+      debug "command!"
       READER $(command -v "$command") $args
       ;;
     function\ *)
-      # echo "function!"
+      debug "function!"
       type -f "$command" | READER $args
       ;;
     hash\ *)
-      echo "hash!"
+      debug "hash!"
       output=$(hash -m "$1")
       READER ${output##*=} $args
       ;;
     shell\ builtin)
-      # echo "builtin!"
+      debug "builtin!"
       man $command
       ;;
     */*)
-      # echo "path!"
+      debug "path!"
       if [[ $(file "$target" | grep -v 'script' | grep -E 'binary|executable') ]]
       then
         man $command 2>/dev/null || $command --help
@@ -128,7 +136,7 @@ explain () {
       fi
       ;;
     *)
-      # echo "other!"
+      debug "other!"
       echo $target
       ;;
   esac
