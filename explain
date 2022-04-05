@@ -1,4 +1,20 @@
-#!/bin/bash
+#!/bin/zsh
+
+
+### LOGGING UTILITY ###
+#
+# load simple-logger if it is available
+if source "$LOGGER_SOURCE_LOCATION" 2>/dev/null;
+then
+  log_source "explain"
+  log_level 'debug'
+else
+  # empty logging functions to avoid errors
+  #  for anyone who lacks simple-logger
+  warn  () { echo $@ > /dev/null }
+  state () { echo $@ > /dev/null }
+  debug () { echo $@ > /dev/null }
+fi
 
 ###
 # shellcheck disable=SC2139
